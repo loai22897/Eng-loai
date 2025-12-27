@@ -7,8 +7,30 @@ export interface Attachment {
 export enum ModelType {
   FLASH = 'gemini-3-flash-preview',
   PRO_IMAGE = 'gemini-3-pro-image-preview',
-  FLASH_THINKING = 'gemini-3-flash-preview', // Configured with thinking budget if needed
+  FLASH_THINKING = 'gemini-3-flash-preview',
   PRO = 'gemini-3-pro-preview'
+}
+
+export enum AspectRatio {
+  SQUARE = 'SQUARE',
+  POSTER = 'POSTER',
+  LANDSCAPE = 'LANDSCAPE',
+  WIDE = 'WIDE'
+}
+
+export enum PrintFormat {
+  POSTER = 'POSTER',
+  TSHIRT = 'TSHIRT',
+  MUG = 'MUG',
+  BUSINESS_CARD = 'BUSINESS_CARD'
+}
+
+export enum ProductType {
+  TSHIRT = 'TSHIRT',
+  HOODIE = 'HOODIE',
+  POSTER = 'POSTER',
+  MUG = 'MUG',
+  NOTEBOOK = 'NOTEBOOK'
 }
 
 export type DeviceSegment = 'printers' | 'copiers' | 'scanners';
@@ -24,7 +46,7 @@ export interface MaintenancePart {
 export interface SegmentConfig {
   name: string;
   icon: string;
-  themeColor: string;
+  themeColor: 'blue' | 'emerald' | 'indigo';
   brands: string[];
   categories: Record<string, string[]>;
   suggestions: Record<string, string[]>;
@@ -142,6 +164,7 @@ export enum AppView {
   ERROR_CODES = 'ERROR_CODES',
   DRIVERS = 'DRIVERS',
   ACADEMY = 'ACADEMY',
+  HISTORY = 'HISTORY',
   ABOUT = 'ABOUT'
 }
 
@@ -154,13 +177,6 @@ export interface PrinterDetails {
   firmware_url?: string;
 }
 
-export enum AspectRatio {
-  SQUARE = '1:1',
-  POSTER = '3:4',
-  LANDSCAPE = '4:3',
-  WIDE = '16:9'
-}
-
 export const PRINTER_BRANDS = ['HP', 'Canon', 'Ricoh', 'Brother', 'Sharp', 'Konica Minolta', 'Kyocera', 'Epson', 'Samsung', 'Toshiba', 'Lexmark', 'Xerox', 'Fujitsu', 'Kodak'];
 
 export const COMMON_PARTS = [
@@ -170,22 +186,6 @@ export const COMMON_PARTS = [
   'الليزر (Laser Scanner)',
   'اللوحة الأم (Formatter Board)'
 ];
-
-// Added missing members for fixes
-export enum PrintFormat {
-  POSTER = 'POSTER',
-  TSHIRT = 'TSHIRT',
-  MUG = 'MUG',
-  BUSINESS_CARD = 'BUSINESS_CARD'
-}
-
-export enum ProductType {
-  TSHIRT = 'TSHIRT',
-  HOODIE = 'HOODIE',
-  POSTER = 'POSTER',
-  MUG = 'MUG',
-  NOTEBOOK = 'NOTEBOOK'
-}
 
 export type LiveConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 

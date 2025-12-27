@@ -4,12 +4,12 @@ import { fetchLessonDetails, generateImage, analyzeMultimodal } from '../service
 import { LessonContent, DeviceSegment, SEGMENTS_CONFIG, PRINTER_SERIES_SUGGESTIONS } from '../types';
 import * as LucideIcons from 'lucide-react';
 import { 
-  Loader2, CheckCircle, PlayCircle, GraduationCap,
+  Loader2, CheckCircle, GraduationCap,
   ArrowRight, ListChecks, Lightbulb, 
-  Image as ImageIcon, ChevronLeft, Home, Youtube,
-  Search, Scan, Info, Maximize2, X,
-  Monitor, ChevronDown, Minimize2, Layers, Maximize,
-  Camera, CameraOff, RefreshCw, Zap, Cpu, AlertCircle, Sparkles
+  Image as ImageIcon, ChevronLeft, Home,
+  Search, Scan, Maximize2, X,
+  Monitor, ChevronDown, Layers, Maximize,
+  Camera, RefreshCw, Zap, Cpu, AlertCircle, Sparkles
 } from 'lucide-react';
 
 const Academy: React.FC = () => {
@@ -40,6 +40,36 @@ const Academy: React.FC = () => {
 
   const currentSegmentConfig = SEGMENTS_CONFIG[selectedSegment];
 
+  // Map for Tailwind dynamic classes to avoid purging/bugs
+  const themeStyles = {
+    blue: {
+      bg: 'bg-blue-600',
+      text: 'text-blue-600',
+      border: 'border-blue-100',
+      ring: 'focus:ring-blue-500',
+      lightBg: 'bg-blue-50',
+      softText: 'text-blue-700'
+    },
+    emerald: {
+      bg: 'bg-emerald-600',
+      text: 'text-emerald-600',
+      border: 'border-emerald-100',
+      ring: 'focus:ring-emerald-500',
+      lightBg: 'bg-emerald-50',
+      softText: 'text-emerald-700'
+    },
+    indigo: {
+      bg: 'bg-indigo-600',
+      text: 'text-indigo-600',
+      border: 'border-indigo-100',
+      ring: 'focus:ring-indigo-500',
+      lightBg: 'bg-indigo-50',
+      softText: 'text-indigo-700'
+    }
+  };
+
+  const currentStyle = themeStyles[currentSegmentConfig.themeColor];
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -69,13 +99,7 @@ const Academy: React.FC = () => {
       const customModel = searchQuery.trim().startsWith(selectedBrand) ? searchQuery.trim() : `${prefix}${searchQuery.trim()}`;
       results = [customModel, ...results];
     }
-    return results.sort((a, b) => {
-        const aSuggested = uniqueModelsExist(a);
-        const bSuggested = uniqueModelsExist(b);
-        if (aSuggested && !bSuggested) return -1;
-        if (!aSuggested && bSuggested) return 1;
-        return a.localeCompare(b);
-    }).slice(0, 50);
+    return results.slice(0, 50);
   }, [debouncedSearch, selectedBrand, selectedSegment, searchQuery]);
 
   function uniqueModelsExist(model: string) {
@@ -83,19 +107,8 @@ const Academy: React.FC = () => {
     (Object.values(SEGMENTS_CONFIG[selectedSegment].suggestions) as string[][]).forEach(list => {
       pool = [...pool, ...list];
     });
-    if (selectedSegment === 'printers') {
-      (Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][]).forEach(list => {
-        pool = [...pool, ...list];
-      });
-    }
     return pool.some(m => m.toLowerCase() === model.toLowerCase());
   }
-
-  useEffect(() => {
-    if (view === 'selector' && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [view, searchQuery, selectedBrand]);
 
   const handleModelSelect = (model: string) => {
     setSelectedModel(model);
@@ -109,19 +122,14 @@ const Academy: React.FC = () => {
     setIsPiP(false);
     setAnalysisResult(null);
     setLessonContent(null);
-    setImageGenError(null);
     
-    // FAST TRACK: Start both operations in parallel
-    const lessonPromise = fetchLessonDetails(part.name, selectedModel);
-    const imagePromise = triggerImageGeneration(part.name, selectedModel);
-
     try {
-      const content = await lessonPromise;
+      const content = await fetchLessonDetails(part.name, selectedModel);
       if (content) {
         setLessonContent(content);
-        setIsLoadingLesson(false); // Text is ready, show it!
+        setIsLoadingLesson(false);
+        triggerImageGeneration(part.name, selectedModel);
       }
-      // Image will follow when imagePromise resolves inside triggerImageGeneration
     } catch (e) {
       console.error(e);
       setIsLoadingLesson(false);
@@ -132,19 +140,12 @@ const Academy: React.FC = () => {
     setIsImageGenerating(true);
     setImageGenError(null);
     try {
-      const img = await generateImage(`${partName} ${modelName} printer spare part photo`);
+      const img = await generateImage(`${partName} ${modelName} printer internal component high quality macro photograph`);
       setLessonContent(prev => prev ? { ...prev, partImageUrl: img } : null);
     } catch (err: any) {
-      console.error("Image gen error:", err);
       setImageGenError("تعذر توليد الصورة.");
     } finally {
       setIsImageGenerating(false);
-    }
-  };
-
-  const retryImageGeneration = () => {
-    if (activePart && selectedModel) {
-      triggerImageGeneration(activePart.name, selectedModel);
     }
   };
 
@@ -179,7 +180,7 @@ const Academy: React.FC = () => {
     stopCamera();
     setIsAnalyzing(true);
     try {
-      const prompt = `تحليل حالة ${activePart?.name} في طابعة ${selectedModel}.`;
+      const prompt = `أنت مهندس صيانة طابعات خبير. حلل حالة ${activePart?.name} في طابعة ${selectedModel} من هذه الصورة الميدانية. هل يوجد كسر أو حرق أو تآكل؟`;
       const result = await analyzeMultimodal(prompt, base64Data, 'image/jpeg');
       setAnalysisResult(result);
     } catch (err) {
@@ -200,18 +201,10 @@ const Academy: React.FC = () => {
     return IconComponent ? <IconComponent className={className} /> : <Scan className={className} />;
   };
 
-  const themeColorClass = () => {
-    switch (selectedSegment) {
-      case 'copiers': return 'emerald';
-      case 'scanners': return 'indigo';
-      default: return 'blue';
-    }
-  };
-
   const Header = () => (
     <div className="bg-white/95 backdrop-blur-md border-b border-slate-100 p-3 sticky top-0 z-50 flex items-center justify-between shadow-sm px-6">
        <div className="flex items-center gap-3">
-          <div className={`size-9 bg-${themeColorClass()}-600 rounded-lg flex items-center justify-center text-white shadow-lg`}>
+          <div className={`size-9 ${currentStyle.bg} rounded-lg flex items-center justify-center text-white shadow-lg`}>
              <GraduationCap size={18} />
           </div>
           <div>
@@ -234,7 +227,7 @@ const Academy: React.FC = () => {
            <button
              key={seg}
              onClick={() => { setSelectedSegment(seg); setSelectedBrand(''); setSearchQuery(''); }}
-             className={`flex-1 flex flex-col items-center py-4 rounded-xl transition-all ${selectedSegment === seg ? `bg-white text-${SEGMENTS_CONFIG[seg].themeColor}-600 shadow-md scale-[1.02]` : 'text-slate-400 hover:text-slate-600'}`}
+             className={`flex-1 flex flex-col items-center py-4 rounded-xl transition-all ${selectedSegment === seg ? `bg-white ${themeStyles[SEGMENTS_CONFIG[seg].themeColor].text} shadow-md scale-[1.02]` : 'text-slate-400 hover:text-slate-600'}`}
            >
               <span className="text-3xl md:text-4xl mb-2">{SEGMENTS_CONFIG[seg].icon}</span>
               <span className="font-black text-[9px] md:text-[10px] uppercase tracking-tighter">{SEGMENTS_CONFIG[seg].name}</span>
@@ -243,53 +236,36 @@ const Academy: React.FC = () => {
       </div>
       <div className="flex gap-1.5 items-center">
          <div className="relative w-[35%]">
-            <select value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={`w-full appearance-none bg-white p-2.5 pr-7 rounded-xl shadow-sm border border-slate-200 font-bold text-slate-700 outline-none text-[10px] md:text-xs focus:ring-2 focus:ring-${themeColorClass()}-500 h-11`}>
+            <select value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={`w-full appearance-none bg-white p-2.5 pr-7 rounded-xl shadow-sm border border-slate-200 font-bold text-slate-700 outline-none text-[10px] md:text-xs ${currentStyle.ring} h-11`}>
                <option value="">كل الماركات</option>
                {currentSegmentConfig.brands.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
          </div>
-         <div className={`flex-1 bg-white p-0.5 rounded-xl shadow-sm border border-slate-200 flex items-center focus-within:ring-2 focus-within:ring-${themeColorClass()}-500 h-11`}>
+         <div className={`flex-1 bg-white p-0.5 rounded-xl shadow-sm border border-slate-200 flex items-center focus-within:ring-2 ${currentStyle.ring} h-11`}>
             <input ref={searchInputRef} type="text" placeholder="اكتب أي موديل للتشخيص..." className="flex-1 bg-transparent px-3 py-2 text-right font-bold text-slate-800 outline-none text-xs placeholder:text-slate-300" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            <div className={`p-2 text-${themeColorClass()}-400`}><Search size={16} /></div>
+            <div className={`p-2 ${currentStyle.text} opacity-50`}><Search size={16} /></div>
          </div>
       </div>
-      <div className="space-y-1.5">
-         <div className="flex justify-between items-center px-2">
-            <span className="text-[8px] text-slate-300 font-mono">نتائج البحث: {filteredModels.length}</span>
-            <h4 className="text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">قاعدة بيانات الموديلات الشاملة</h4>
-         </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {filteredModels.length > 0 ? filteredModels.map((model, idx) => (
-              <button key={`${model}-${idx}`} onClick={() => handleModelSelect(model)} className="w-full bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:border-blue-300 transition-all text-right flex items-center justify-between group active:scale-[0.98]">
-                <div className="flex items-center gap-2">
-                  <div className={`flex items-center gap-1 ${model.toLowerCase().includes(debouncedSearch.toLowerCase()) && debouncedSearch !== '' ? 'text-indigo-600 bg-indigo-50' : 'text-red-600 bg-red-50'} px-1.5 py-0.5 rounded-md border border-current opacity-70`}>
-                    <span className="text-[8px] font-black uppercase">Diagnose ⚡</span>
-                  </div>
-                  <ChevronLeft size={14} className="text-slate-200 group-hover:text-blue-500 transition-colors" />
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="font-bold text-slate-700 text-xs truncate max-w-[150px]">{model}</span>
-                  {idx === 0 && searchQuery.trim() !== '' && !uniqueModelsExist(model) ? (
-                    <Cpu size={14} className="text-indigo-400 animate-pulse" />
-                  ) : (
-                    <Monitor size={14} className="text-slate-300" />
-                  )}
-                </div>
-              </button>
-            )) : (
-              <div className="col-span-full bg-slate-50 py-12 rounded-2xl text-center space-y-3 border border-dashed border-slate-200">
-                <div className="relative inline-block">
-                  <Search size={32} className="mx-auto text-slate-200" />
-                  <Zap size={14} className="absolute -top-1 -right-1 text-amber-400 animate-bounce" />
-                </div>
-                <div>
-                  <p className="text-slate-500 font-black text-xs">ابدأ بكتابة اسم الموديل</p>
-                  <p className="text-slate-300 text-[9px] mt-1">البحث يدعم جميع الماركات والموديلات العالمية</p>
-                </div>
-              </div>
-            )}
-         </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+         {filteredModels.length > 0 ? filteredModels.map((model, idx) => (
+           <button key={`${model}-${idx}`} onClick={() => handleModelSelect(model)} className="w-full bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm hover:border-blue-300 transition-all text-right flex items-center justify-between group active:scale-[0.98]">
+             <ChevronLeft size={14} className="text-slate-200 group-hover:text-blue-500 transition-colors" />
+             <div className="flex items-center gap-2.5">
+               <span className="font-bold text-slate-700 text-xs truncate max-w-[150px]">{model}</span>
+               {idx === 0 && searchQuery.trim() !== '' && !uniqueModelsExist(model) ? (
+                 <Cpu size={14} className="text-indigo-400 animate-pulse" />
+               ) : (
+                 <Monitor size={14} className="text-slate-300" />
+               )}
+             </div>
+           </button>
+         )) : (
+           <div className="col-span-full bg-slate-50 py-12 rounded-2xl text-center space-y-3 border border-dashed border-slate-200">
+             <Search size={32} className="mx-auto text-slate-200" />
+             <p className="text-slate-500 font-black text-xs">ابدأ بكتابة اسم الموديل</p>
+           </div>
+         )}
       </div>
     </div>
   );
@@ -297,10 +273,10 @@ const Academy: React.FC = () => {
   const PartsNavigationView = () => (
     <div className="p-4 md:p-8 animate-fade-in space-y-5 max-w-2xl mx-auto">
        <div className="flex items-center justify-between sticky top-[60px] z-40 bg-white/80 backdrop-blur-md py-3 px-3 rounded-xl border border-slate-100 shadow-sm">
-          <button onClick={() => setView('selector')} className={`p-1.5 bg-slate-100 rounded-lg text-${themeColorClass()}-600 active:scale-90 transition-transform`}><ArrowRight size={18} /></button>
+          <button onClick={() => setView('selector')} className={`p-1.5 bg-slate-100 rounded-lg ${currentStyle.text} active:scale-90 transition-transform`}><ArrowRight size={18} /></button>
           <div className="text-right">
              <h3 className="text-base font-black text-slate-900">{selectedModel}</h3>
-             <p className="text-[8px] text-slate-400 font-bold">Maintenance Blueprint</p>
+             <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Maintenance Blueprint</p>
           </div>
        </div>
        <div className="flex flex-col gap-3">
@@ -334,7 +310,7 @@ const Academy: React.FC = () => {
 
        {isLoadingLesson ? (
           <div className="h-64 bg-white rounded-2xl flex flex-col items-center justify-center gap-4 border border-slate-100">
-             <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+             <Loader2 className={`w-10 h-10 animate-spin ${currentStyle.text}`} />
              <p className="text-[10px] font-black uppercase text-slate-400">تحميل البيانات السريع...</p>
           </div>
        ) : (
@@ -349,7 +325,7 @@ const Academy: React.FC = () => {
 
            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-lg text-right">
               <div className="flex items-center justify-between mb-3 px-1">
-                 <button onClick={startCamera} className={`flex items-center gap-2 px-3 py-1.5 bg-${themeColorClass()}-50 text-${themeColorClass()}-600 rounded-full border border-${themeColorClass()}-100 active:scale-95 transition-all`}>
+                 <button onClick={startCamera} className={`flex items-center gap-2 px-3 py-1.5 ${currentStyle.lightBg} ${currentStyle.text} rounded-full border ${currentStyle.border} active:scale-95 transition-all`}>
                     <span className="text-[9px] font-black uppercase tracking-wider">التقط صورة للتحليل</span>
                     <Camera size={14} />
                  </button>
@@ -367,17 +343,8 @@ const Academy: React.FC = () => {
                     </>
                  ) : isImageGenerating ? (
                     <div className="flex flex-col items-center justify-center gap-3">
-                       <div className="relative">
-                          <Loader2 size={32} className={`text-${themeColorClass()}-600 animate-spin`} />
-                          <Sparkles size={14} className="absolute inset-0 m-auto text-indigo-500 animate-pulse" />
-                       </div>
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">جاري الرسم الفوتوغرافية السريع...</p>
-                    </div>
-                 ) : imageGenError ? (
-                    <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
-                       <AlertCircle size={32} className="text-red-400" />
-                       <p className="text-[10px] font-bold text-slate-500">{imageGenError}</p>
-                       <button onClick={retryImageGeneration} className="text-[9px] font-black text-blue-600 underline flex items-center gap-1">إعادة المحاولة <RefreshCw size={10} /></button>
+                       <Loader2 size={32} className={`${currentStyle.text} animate-spin`} />
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">جاري الرسم الفوتوغرافي...</p>
                     </div>
                  ) : (
                    <div className="text-slate-200"><ImageIcon size={48} /></div>
@@ -386,7 +353,7 @@ const Academy: React.FC = () => {
 
               {(isAnalyzing || analysisResult) && (
                 <div className={`mt-4 p-4 rounded-xl border animate-fade-in ${isAnalyzing ? 'bg-slate-50 border-slate-200' : 'bg-emerald-50 border-emerald-100'}`}>
-                   <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-end gap-2">
+                   <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-end gap-2 text-right">
                       {isAnalyzing ? "جاري تحليل صورتك..." : "نتيجة فحص المهندس الذكي"}
                       {isAnalyzing ? <RefreshCw size={12} className="animate-spin" /> : <CheckCircle size={12} className="text-emerald-600" />}
                    </h5>
@@ -406,7 +373,7 @@ const Academy: React.FC = () => {
                     {lessonContent?.steps.map((s, i) => (
                       <div key={i} className="flex gap-3 items-start justify-end group">
                          <p className="text-slate-800 leading-relaxed font-bold text-xs pt-0.5 flex-1">{s}</p>
-                         <span className={`size-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-black text-[10px] shrink-0 group-hover:bg-${themeColorClass()}-600 transition-all`}>{i+1}</span>
+                         <span className={`size-6 rounded-md bg-slate-900 text-white flex items-center justify-center font-black text-[10px] shrink-0 group-hover:${currentStyle.bg} transition-all`}>{i+1}</span>
                       </div>
                     ))}
                  </div>
@@ -418,7 +385,7 @@ const Academy: React.FC = () => {
               </div>
            </div>
 
-           <button onClick={() => { setView('parts'); setIsPiP(false); }} className={`w-full py-5 bg-${themeColorClass()}-600 text-white rounded-xl font-black text-base shadow-xl active:scale-95 flex items-center justify-center gap-2.5`}>
+           <button onClick={() => { setView('parts'); setIsPiP(false); }} className={`w-full py-5 ${currentStyle.bg} text-white rounded-xl font-black text-base shadow-xl active:scale-95 flex items-center justify-center gap-2.5`}>
              <CheckCircle size={20} /> إنهاء الدرس
            </button>
          </>
