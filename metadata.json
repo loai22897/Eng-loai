@@ -1,0 +1,8 @@
+{
+  "name": "AI Print by Loai",
+  "description": "Smart Assistant for Printer Maintenance and Diagnostics",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
