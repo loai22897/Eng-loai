@@ -1,0 +1,17 @@
+
+{
+  "applets": [
+    {
+      "lastAccessTime": "2025-12-07T17:48:53.941371Z",
+      "firstAccessTime": "2025-12-07T16:15:43.926454Z",
+      "source": {
+        "drive": {
+          "resourceId": "16wA5-pMlViE2EITVm2T5LtnMFwpBZQoZ",
+          "revisionId": "0B8Rtw8TBvGzManpZYVVpclFzRHpqeTkyaEhLWjVZOGVQUlNVPQ"
+        }
+      },
+      "name": "PrintCare Bot | by Eng. Loai",
+      "description": "مساعد ذكي متخصص لمهندسي صيانة الطابعات يوفر تشخيصات موجزة وحلولاً لأكواد الأعطال."
+    }
+  ]
+}
