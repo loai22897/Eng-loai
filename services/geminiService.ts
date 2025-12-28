@@ -12,7 +12,6 @@ const getClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 };
 
-// Added missing sendMessageToGemini function
 export const sendMessageToGemini = async (prompt: string): Promise<string> => {
   const ai = getClient();
   const response = await ai.models.generateContent({
@@ -61,7 +60,7 @@ export const fetchLessonDetails = async (lessonTitle: string, model?: string): P
 export const generateImage = async (prompt: string): Promise<string> => {
   const ai = getClient();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image', // Using 2.5 flash image for general tasks
+    model: 'gemini-2.5-flash-image',
     contents: {
       parts: [{ text: `PHOTOGRAPH, SHARP MACRO, technical view of printer spare part: ${prompt}. Professional studio lighting.` }]
     },
@@ -80,13 +79,10 @@ export const generateImage = async (prompt: string): Promise<string> => {
   throw new Error("Image generation failed");
 };
 
-// Updated streamChatResponse to handle extra arguments for Invoice and Part Lookup
 export const streamChatResponse = async (
   prompt: string, 
   onChunk: (text: string) => void, 
-  userName?: string,
-  onInvoice?: (data: InvoiceData) => void,
-  onPartLookup?: (data: PartLookupData) => void
+  userName?: string
 ): Promise<string> => {
   const ai = getClient();
   const responseStream = await ai.models.generateContentStream({
@@ -129,7 +125,6 @@ export const getComprehensivePrinterDetails = async (brand: string, model: strin
   return JSON.parse(response.text || "null");
 };
 
-// Added missing searchForDrivers function using Google Search grounding
 export const searchForDrivers = async (model: string, os: string) => {
   const ai = getClient();
   const prompt = `Find official download links for drivers of printer model "${model}" for operating system "${os}". List the links clearly in Arabic.`;
@@ -151,7 +146,6 @@ export const searchForDrivers = async (model: string, os: string) => {
   };
 };
 
-// Added missing findFirmware function using Google Search grounding
 export const findFirmware = async (brand: string, model: string): Promise<string> => {
   const ai = getClient();
   const prompt = `Search for latest official firmware versions for "${brand} ${model}". Format as a technical markdown table in Arabic.`;
@@ -165,7 +159,6 @@ export const findFirmware = async (brand: string, model: string): Promise<string
   return response.text || "";
 };
 
-// Added missing fetchLatestPrinterData function
 export const fetchLatestPrinterData = async (brand: string): Promise<string[]> => {
   const ai = getClient();
   const prompt = `List 10 recent printer model names from ${brand} (including 2024-2025 releases). Return as a JSON array of strings only.`;
