@@ -1,4 +1,3 @@
-
 /**
  * ملف تشغيل بوت تلجرام (Pro Version)
  * يدعم البحث المتقدم عن الفيرموير والتعريفات والمواصفات
@@ -36,24 +35,10 @@ const PORT = process.env.PORT || 4000;
 
 // قراءة المفاتيح بدقة
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.AI_STUDIO_API_KEY || process.env.API_KEY;
-const WEBHOOK_DOMAIN = process.env.WEBHOOK_DOMAIN;
-
-// --- التحقق من المفاتيح ---
-if (!BOT_TOKEN) {
-  console.error("❌ خطأ قاتل: لم يتم العثور على TELEGRAM_BOT_TOKEN في ملف .env");
-  process.exit(1);
-}
-if (!GEMINI_API_KEY) {
-  console.error("❌ خطأ قاتل: لم يتم العثور على API_KEY الخاص بـ Gemini في ملف .env");
-  process.exit(1);
-}
-
-console.log("✅ المفاتيح موجودة. جاري إعداد الاتصال...");
 
 // --- إعداد الذكاء الاصطناعي ---
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-// Updated to gemini-3-flash-preview per guidelines
+// Always use process.env.API_KEY as the exclusive source as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const MODEL_NAME = "gemini-3-flash-preview"; 
 
 // --- التعليمات الموحدة ---
@@ -136,7 +121,7 @@ bot.on('text', async (ctx) => {
           },
         });
 
-        // Use property access for .text
+        // GenerateContentResponse.text is a property
         let replyText = response.text || "";
 
         const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
@@ -164,7 +149,6 @@ bot.on('text', async (ctx) => {
                 config: { systemInstruction: systemInstruction } 
             });
             
-            // Use property access for .text
             const fallbackText = fallbackResponse.text;
             if (fallbackText) {
                 await ctx.reply(fallbackText + "\n\n*(ملاحظة: حدث خطأ في البحث الحي، هذه الإجابة من الأرشيف الداخلي)*");
@@ -206,7 +190,6 @@ bot.on('photo', async (ctx) => {
             config: { systemInstruction: MAIN_SYSTEM_INSTRUCTION }
         });
 
-        // Use property access for .text
         await ctx.reply(aiResponse.text || "لم أستطع تحليل الصورة.");
     } catch (error) {
         console.error("Image Error:", error);
@@ -220,8 +203,6 @@ const startBot = async () => {
         if (WEBHOOK_DOMAIN) {
             app.use(express.json());
             
-            // نقطة النهاية (Endpoint) التي سيقوم تلجرام بإرسال التحديثات إليها
-            // Cloudflare سيقوم بتوجيه HTTPS إلى هذا المسار
             app.post('/telegram-webhook', (req, res) => {
                 bot.handleUpdate(req.body, res);
             });
@@ -231,7 +212,6 @@ const startBot = async () => {
             const webhookUrl = `${WEBHOOK_DOMAIN}/telegram-webhook`;
             console.log(`🔌 وضع الإنتاج (Cloudflare): جاري ضبط Webhook على: ${webhookUrl}`);
             
-            // إلغاء أي webhook سابق وضبط الجديد
             await bot.telegram.deleteWebhook();
             await bot.telegram.setWebhook(webhookUrl);
             

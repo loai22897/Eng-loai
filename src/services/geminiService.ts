@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { PrinterDetails, LessonContent } from "../types";
 
@@ -9,7 +8,8 @@ const getSystemInstruction = (userName?: string) => `
 `;
 
 const getClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  // Always use process.env.API_KEY directly as per guidelines
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 export const sendMessageToGemini = async (prompt: string): Promise<string> => {

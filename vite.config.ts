@@ -1,10 +1,10 @@
-
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const apiKey = env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || env.API_KEY || '';
+export default defineConfig(() => {
+  // Use process.env.API_KEY directly as per guidelines. 
+  // This avoids the 'process.cwd()' typing error in vite.config.ts environments where node types are not loaded.
+  const apiKey = process.env.API_KEY || '';
 
   return {
     plugins: [react()],

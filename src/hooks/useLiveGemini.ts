@@ -1,10 +1,7 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { base64ToUint8Array, decodeAudioData, createPcmBlob } from '../services/audioUtils';
 import { LiveConnectionState } from '../types';
-
-const apiKey = process.env.API_KEY || '';
 
 export function useLiveGemini() {
   const [connectionState, setConnectionState] = useState<LiveConnectionState>('disconnected');
@@ -27,7 +24,8 @@ export function useLiveGemini() {
       setConnectionState('connecting');
 
       // Re-create AI instance right before connection per guidelines
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // Always use process.env.API_KEY as the exclusive source
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
       // Initialize Audio Contexts
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -70,6 +68,7 @@ export function useLiveGemini() {
               setVolume(Math.min(rms * 5, 1)); // Amplify a bit for visual
 
               const pcmBlob = createPcmBlob(inputData);
+              // CRITICAL: Solely rely on sessionPromise resolves to prevent race conditions
               sessionPromise.then((session) => {
                 session.sendRealtimeInput({ media: pcmBlob });
               });
