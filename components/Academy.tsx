@@ -64,9 +64,11 @@ const Academy: React.FC = () => {
 
   const filteredModels = useMemo(() => {
     let globalPool: string[] = [];
-    Object.values(currentSegmentConfig.suggestions).forEach(list => { globalPool = [...globalPool, ...list]; });
+    // Fix: Explicitly cast Object.values results to string[][] to avoid "unknown" iterator error during spread.
+    (Object.values(currentSegmentConfig.suggestions) as string[][]).forEach(list => { globalPool = [...globalPool, ...list]; });
     if (selectedSegment === 'printers') {
-      Object.values(PRINTER_SERIES_SUGGESTIONS).forEach(list => { globalPool = [...globalPool, ...list]; });
+      // Fix: Explicitly cast Object.values results to string[][] to avoid "unknown" iterator error during spread.
+      (Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][]).forEach(list => { globalPool = [...globalPool, ...list]; });
     }
     const uniqueModels = Array.from(new Set(globalPool));
     const q = debouncedSearch.toLowerCase().trim();
@@ -75,7 +77,7 @@ const Academy: React.FC = () => {
       const matchBrand = selectedBrand ? m.toLowerCase().includes(selectedBrand.toLowerCase()) : true;
       return matchQuery && matchBrand;
     }).slice(0, 50);
-  }, [debouncedSearch, selectedBrand, selectedSegment]);
+  }, [debouncedSearch, selectedBrand, selectedSegment, currentSegmentConfig.suggestions]);
 
   const loadLesson = async (part: any) => {
     setActivePart(part);
@@ -197,7 +199,7 @@ const Academy: React.FC = () => {
         {view === 'lesson' && !isLoadingLesson && (
           <div className="max-w-xl mx-auto space-y-4">
             <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
-              <iframe src={`https://www.youtube.com/embed/${lessonContent?.videoId}`} className="w-full h-full" allowFullScreen></iframe>
+              <iframe src={`https://www.youtube.com/embed/${lessonContent?.videoId}`} className="w-full h-full" allowFullScreen title="Maintenance Video"></iframe>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-right">
               <div className="flex justify-between items-center mb-4">
@@ -207,7 +209,7 @@ const Academy: React.FC = () => {
                 <span className="font-black text-slate-400 text-[10px]">عرض فني للقطعة</span>
               </div>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex items-center justify-center">
-                 {lessonContent?.partImageUrl ? <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" /> : <Loader2 className="animate-spin text-slate-300" />}
+                 {lessonContent?.partImageUrl ? <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" alt="Printer Part" /> : <Loader2 className="animate-spin text-slate-300" />}
               </div>
             </div>
             <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-right">
