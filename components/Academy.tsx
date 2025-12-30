@@ -33,8 +33,6 @@ const Academy: React.FC = () => {
   const [isLoadingLesson, setIsLoadingLesson] = useState(false);
   const [isImageGenerating, setIsImageGenerating] = useState(false);
   const [imageGenError, setImageGenError] = useState<string | null>(null);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [isPiP, setIsPiP] = useState(false);
 
   // Camera & Analysis State
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -42,8 +40,6 @@ const Academy: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
   // Refs
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -63,18 +59,18 @@ const Academy: React.FC = () => {
   }, [searchQuery]);
 
   const filteredModels = useMemo(() => {
-    let globalPool: string[] = [];
+    const globalPool: string[] = [];
     
     // Casting Object.values to string[][] to fix TypeScript unknown iterator error
     const suggestionsPool = Object.values(currentSegmentConfig.suggestions) as string[][];
     suggestionsPool.forEach(list => {
-      globalPool = [...globalPool, ...list];
+      globalPool.push(...list);
     });
 
     if (selectedSegment === 'printers') {
       const seriesSuggestions = Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][];
       seriesSuggestions.forEach(list => {
-        globalPool = [...globalPool, ...list];
+        globalPool.push(...list);
       });
     }
 
@@ -110,7 +106,6 @@ const Academy: React.FC = () => {
       const img = await generateImage(`${partName} ${modelName} technical component`);
       setLessonContent(prev => prev ? { ...prev, partImageUrl: img } : null);
     } catch (err) {
-      console.error("Image generation error:", err);
       setImageGenError("Image failed");
     } finally {
       setIsImageGenerating(false);
@@ -123,7 +118,6 @@ const Academy: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
-      console.error("Camera error:", err);
       setIsCameraActive(false);
     }
   };
@@ -149,7 +143,7 @@ const Academy: React.FC = () => {
       const res = await analyzeMultimodal("حلل الصورة", imageData.split(',')[1], 'image/jpeg');
       setAnalysisResult(res);
     } catch (err) {
-      console.error("Analysis error:", err);
+      console.error(err);
     } finally {
       setIsAnalyzing(false);
     }
@@ -234,7 +228,7 @@ const Academy: React.FC = () => {
             <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
               <iframe 
                 src={`https://www.youtube.com/embed/${lessonContent?.videoId}`} 
-                className="w-full h-full" 
+                className="w-full h-full border-none" 
                 allowFullScreen 
                 title="Maintenance Video"
               ></iframe>
@@ -248,9 +242,12 @@ const Academy: React.FC = () => {
               </div>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex items-center justify-center">
                  {lessonContent?.partImageUrl ? (
-                   <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" alt="Printer Part" />
+                    <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" alt="Printer Part" />
                  ) : (
-                   <Loader2 className="animate-spin text-slate-300" />
+                    <div className="flex flex-col items-center">
+                      {isImageGenerating ? <Loader2 className="animate-spin text-blue-500" /> : <ImageIcon className="text-slate-300" />}
+                      <span className="text-[10px] text-slate-400 mt-2">{isImageGenerating ? 'جاري التوليد...' : 'لا توجد صورة'}</span>
+                    </div>
                  )}
               </div>
             </div>
@@ -268,9 +265,9 @@ const Academy: React.FC = () => {
         )}
 
         {isLoadingLesson && (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="animate-spin mb-4" size={40} />
-            <p className="font-bold">جاري تجهيز الدرس الفني...</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
+            <p className="text-slate-500 font-bold">جاري تجهيز الدرس الفني...</p>
           </div>
         )}
       </main>
