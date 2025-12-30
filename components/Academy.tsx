@@ -64,12 +64,20 @@ const Academy: React.FC = () => {
 
   const filteredModels = useMemo(() => {
     let globalPool: string[] = [];
-    // Fix: Explicitly cast Object.values results to string[][] to avoid "unknown" iterator error during spread.
-    (Object.values(currentSegmentConfig.suggestions) as string[][]).forEach(list => { globalPool = [...globalPool, ...list]; });
+    
+    // Casting Object.values to string[][] to fix TypeScript unknown iterator error
+    const suggestionsPool = Object.values(currentSegmentConfig.suggestions) as string[][];
+    suggestionsPool.forEach(list => {
+      globalPool = [...globalPool, ...list];
+    });
+
     if (selectedSegment === 'printers') {
-      // Fix: Explicitly cast Object.values results to string[][] to avoid "unknown" iterator error during spread.
-      (Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][]).forEach(list => { globalPool = [...globalPool, ...list]; });
+      const seriesSuggestions = Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][];
+      seriesSuggestions.forEach(list => {
+        globalPool = [...globalPool, ...list];
+      });
     }
+
     const uniqueModels = Array.from(new Set(globalPool));
     const q = debouncedSearch.toLowerCase().trim();
     return uniqueModels.filter(m => {
@@ -90,7 +98,10 @@ const Academy: React.FC = () => {
         setIsLoadingLesson(false);
         triggerImageGeneration(part.name, selectedModel);
       }
-    } catch (e) { setIsLoadingLesson(false); }
+    } catch (e) {
+      console.error("Error loading lesson:", e);
+      setIsLoadingLesson(false);
+    }
   };
 
   const triggerImageGeneration = async (partName: string, modelName: string) => {
@@ -98,7 +109,12 @@ const Academy: React.FC = () => {
     try {
       const img = await generateImage(`${partName} ${modelName} technical component`);
       setLessonContent(prev => prev ? { ...prev, partImageUrl: img } : null);
-    } catch (err) { setImageGenError("Image failed"); } finally { setIsImageGenerating(false); }
+    } catch (err) {
+      console.error("Image generation error:", err);
+      setImageGenError("Image failed");
+    } finally {
+      setIsImageGenerating(false);
+    }
   };
 
   const startCamera = async () => {
@@ -106,11 +122,16 @@ const Academy: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err) { setIsCameraActive(false); }
+    } catch (err) {
+      console.error("Camera error:", err);
+      setIsCameraActive(false);
+    }
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+    }
     setIsCameraActive(false);
   };
 
@@ -127,7 +148,11 @@ const Academy: React.FC = () => {
     try {
       const res = await analyzeMultimodal("حلل الصورة", imageData.split(',')[1], 'image/jpeg');
       setAnalysisResult(res);
-    } finally { setIsAnalyzing(false); }
+    } catch (err) {
+      console.error("Analysis error:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const renderIcon = (name: string, className?: string) => {
@@ -139,10 +164,18 @@ const Academy: React.FC = () => {
     <div className="h-full bg-slate-50 overflow-hidden flex flex-col font-tajawal">
       <div className="bg-white border-b border-slate-100 p-3 sticky top-0 z-50 flex items-center justify-between shadow-sm px-6">
         <div className="flex items-center gap-3">
-          <div className={`size-9 ${currentStyle.bg} rounded-lg flex items-center justify-center text-white`}><GraduationCap size={18} /></div>
-          <div><h1 className="font-black text-slate-800 text-xs leading-none">أكاديمية الصيانة</h1></div>
+          <div className={`size-9 ${currentStyle.bg} rounded-lg flex items-center justify-center text-white`}>
+            <GraduationCap size={18} />
+          </div>
+          <div>
+            <h1 className="font-black text-slate-800 text-xs leading-none">أكاديمية الصيانة</h1>
+          </div>
         </div>
-        {view !== 'selector' && <button onClick={() => setView('selector')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500"><Home size={18} /></button>}
+        {view !== 'selector' && (
+          <button onClick={() => setView('selector')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+            <Home size={18} />
+          </button>
+        )}
       </div>
       
       <main className="flex-1 overflow-y-auto custom-scrollbar p-4">
@@ -199,7 +232,12 @@ const Academy: React.FC = () => {
         {view === 'lesson' && !isLoadingLesson && (
           <div className="max-w-xl mx-auto space-y-4">
             <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
-              <iframe src={`https://www.youtube.com/embed/${lessonContent?.videoId}`} className="w-full h-full" allowFullScreen title="Maintenance Video"></iframe>
+              <iframe 
+                src={`https://www.youtube.com/embed/${lessonContent?.videoId}`} 
+                className="w-full h-full" 
+                allowFullScreen 
+                title="Maintenance Video"
+              ></iframe>
             </div>
             <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-right">
               <div className="flex justify-between items-center mb-4">
@@ -209,7 +247,11 @@ const Academy: React.FC = () => {
                 <span className="font-black text-slate-400 text-[10px]">عرض فني للقطعة</span>
               </div>
               <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden border border-slate-100 flex items-center justify-center">
-                 {lessonContent?.partImageUrl ? <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" alt="Printer Part" /> : <Loader2 className="animate-spin text-slate-300" />}
+                 {lessonContent?.partImageUrl ? (
+                   <img src={lessonContent.partImageUrl} className="w-full h-full object-cover" alt="Printer Part" />
+                 ) : (
+                   <Loader2 className="animate-spin text-slate-300" />
+                 )}
               </div>
             </div>
             <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-right">
@@ -222,6 +264,13 @@ const Academy: React.FC = () => {
               ))}
             </div>
             <button onClick={() => setView('parts')} className={`w-full py-4 ${currentStyle.bg} text-white rounded-xl font-black shadow-lg`}>تم الإنجاز</button>
+          </div>
+        )}
+
+        {isLoadingLesson && (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+            <Loader2 className="animate-spin mb-4" size={40} />
+            <p className="font-bold">جاري تجهيز الدرس الفني...</p>
           </div>
         )}
       </main>
