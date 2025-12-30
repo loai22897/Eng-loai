@@ -142,3 +142,68 @@ export const PRINTER_SERIES_SUGGESTIONS: Record<string, string[]> = {
   'Sharp': ['MX-M264', 'AR-6020', 'MX-M315NV'],
   'Brother': ['HL-L2350DW', 'MFC-L2710DW', 'DCP-L2540DW']
 };
+
+// Added missing exports to fix component errors
+export enum AspectRatio {
+  SQUARE = 'SQUARE',
+  POSTER = 'POSTER',
+  LANDSCAPE = 'LANDSCAPE',
+  WIDE = 'WIDE'
+}
+
+export enum PrintFormat {
+  POSTER = 'POSTER',
+  TSHIRT = 'TSHIRT',
+  MUG = 'MUG',
+  BUSINESS_CARD = 'BUSINESS_CARD'
+}
+
+export enum ProductType {
+  TSHIRT = 'TSHIRT',
+  HOODIE = 'HOODIE',
+  POSTER = 'POSTER',
+  MUG = 'MUG',
+  NOTEBOOK = 'NOTEBOOK'
+}
+
+export enum ModelType {
+  FLASH = 'FLASH',
+  FLASH_THINKING = 'FLASH_THINKING',
+  PRO = 'PRO'
+}
+
+export interface InvoiceItem {
+  description: string;
+  partNumber?: string;
+  type: 'part' | 'service';
+  cost: number;
+}
+
+export interface InvoiceData {
+  invoiceNumber: string;
+  date: string;
+  clientName: string;
+  printerModel: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+export interface PartLookupData {
+  partName: string;
+  partNumber: string;
+  compatibility: string[];
+  price?: string;
+}
+
+export const COMMON_PARTS = [
+  'وحدة السخان (Fuser Unit)',
+  'الحصيرة (Transfer Belt)',
+  'بكرات السحب (Pickup Rollers)',
+  'وحدة الدرام (Drum Unit)',
+  'عبوة الحبر (Toner Cartridge)',
+  'وحدة الليزر (Laser Scanner)',
+  'لوحة الفورماتر (Formatter Board)',
+  'لوحة الباور (Power Supply Board)'
+];

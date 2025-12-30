@@ -1,36 +1,64 @@
 
+export enum AppView {
+  CHAT = 'CHAT',
+  PRINTER_SPECS = 'PRINTER_SPECS',
+  FIRMWARE = 'FIRMWARE',
+  ERROR_CODES = 'ERROR_CODES',
+  DRIVERS = 'DRIVERS',
+  ACADEMY = 'ACADEMY',
+  HISTORY = 'HISTORY',
+  ABOUT = 'ABOUT'
+}
+
+export type LiveConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
+
 export interface Attachment {
   mimeType: string;
   data: string;
 }
 
-export enum ModelType {
-  FLASH = 'gemini-3-flash-preview',
-  PRO_IMAGE = 'gemini-3-pro-image-preview',
-  FLASH_THINKING = 'gemini-3-flash-preview',
-  PRO = 'gemini-3-pro-preview'
+export interface Message {
+  id: string;
+  role: 'user' | 'model';
+  content: string;
+  type: 'text' | 'image' | 'audio' | 'invoice' | 'part_lookup';
+  timestamp: Date;
+  metadata?: {
+    imageUrl?: string;
+    audioUrl?: string;
+  };
+  attachments?: Attachment[];
 }
 
-export enum AspectRatio {
-  SQUARE = 'SQUARE',
-  POSTER = 'POSTER',
-  LANDSCAPE = 'LANDSCAPE',
-  WIDE = 'WIDE'
+export interface FaultRecord {
+  id: string;
+  title: string;
+  cause: string;
+  solution: string;
+  estimatedTime: string;
+  partsNeeded: string;
+  timestamp: Date;
+  imageUrl?: string;
 }
 
-export enum PrintFormat {
-  POSTER = 'POSTER',
-  TSHIRT = 'TSHIRT',
-  MUG = 'MUG',
-  BUSINESS_CARD = 'BUSINESS_CARD'
+export interface PrinterDetails {
+  model_name: string;
+  specs_markdown: string;
+  toner_cartridge: string;
+  print_speed: string;
+  release_date: string;
+  firmware_url?: string;
 }
 
-export enum ProductType {
-  TSHIRT = 'TSHIRT',
-  HOODIE = 'HOODIE',
-  POSTER = 'POSTER',
-  MUG = 'MUG',
-  NOTEBOOK = 'NOTEBOOK'
+export interface LessonContent {
+  videoId: string;
+  summary: string;
+  timestamps: { time: string; label: string }[];
+  tools: string[];
+  steps: string[];
+  goldenTip: string;
+  partDescription: string;
+  partImageUrl?: string;
 }
 
 export type DeviceSegment = 'printers' | 'copiers' | 'scanners';
@@ -52,6 +80,8 @@ export interface SegmentConfig {
   suggestions: Record<string, string[]>;
   parts: MaintenancePart[];
 }
+
+export const PRINTER_BRANDS = ['HP', 'Canon', 'Ricoh', 'Brother', 'Sharp', 'Konica Minolta', 'Kyocera', 'Epson', 'Samsung', 'Toshiba', 'Lexmark', 'Xerox', 'Fujitsu', 'Kodak'];
 
 export const SEGMENTS_CONFIG: Record<DeviceSegment, SegmentConfig> = {
   printers: {
@@ -105,101 +135,6 @@ export const SEGMENTS_CONFIG: Record<DeviceSegment, SegmentConfig> = {
   }
 };
 
-export interface InvoiceItem {
-  description: string;
-  cost: number;
-  type: 'part' | 'labor';
-  partNumber?: string;
-}
-
-export interface InvoiceData {
-  clientName: string;
-  printerModel: string;
-  items: InvoiceItem[];
-  subtotal: number;
-  tax: number;
-  total: number;
-  date: string;
-  invoiceNumber: string;
-}
-
-export interface PartLookupData {
-  partName: string;
-  partNumber: string;
-  compatibility: string;
-  description: string;
-  estimatedPrice: string;
-}
-
-export interface LessonContent {
-  videoId: string;
-  summary: string;
-  timestamps: { time: string; label: string }[];
-  tools: string[];
-  steps: string[];
-  goldenTip: string;
-  partDescription: string;
-  partImageUrl?: string;
-}
-
-export interface Message {
-  id: string;
-  role: 'user' | 'model';
-  content: string;
-  type: 'text' | 'image' | 'audio' | 'invoice' | 'part_lookup';
-  timestamp: Date;
-  metadata?: {
-    imageUrl?: string;
-    audioUrl?: string;
-  };
-  attachments?: Attachment[];
-  invoiceData?: InvoiceData;
-  partData?: PartLookupData;
-}
-
-export enum AppView {
-  CHAT = 'CHAT',
-  PRINTER_SPECS = 'PRINTER_SPECS',
-  FIRMWARE = 'FIRMWARE',
-  ERROR_CODES = 'ERROR_CODES',
-  DRIVERS = 'DRIVERS',
-  ACADEMY = 'ACADEMY',
-  HISTORY = 'HISTORY',
-  ABOUT = 'ABOUT'
-}
-
-export interface PrinterDetails {
-  model_name: string;
-  specs_markdown: string;
-  toner_cartridge: string;
-  print_speed: string;
-  release_date: string;
-  firmware_url?: string;
-}
-
-export const PRINTER_BRANDS = ['HP', 'Canon', 'Ricoh', 'Brother', 'Sharp', 'Konica Minolta', 'Kyocera', 'Epson', 'Samsung', 'Toshiba', 'Lexmark', 'Xerox', 'Fujitsu', 'Kodak'];
-
-export const COMMON_PARTS = [
-  'وحدة السخان (Fuser Unit)',
-  'وحدة الدرام (Drum Unit)',
-  'بكرة السحب (Pickup Roller)',
-  'الليزر (Laser Scanner)',
-  'اللوحة الأم (Formatter Board)'
-];
-
-export type LiveConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
-
-export interface FaultRecord {
-  id: string;
-  title: string;
-  cause: string;
-  solution: string;
-  estimatedTime: string;
-  partsNeeded: string;
-  timestamp: Date;
-  imageUrl?: string;
-}
-
 export const PRINTER_SERIES_SUGGESTIONS: Record<string, string[]> = {
   'HP': ['LaserJet M402dn', 'LaserJet M605dn', 'LaserJet Pro M428fdw', 'LaserJet P1102w'],
   'Canon': ['i-SENSYS MF3010', 'imageCLASS LBP6030w', 'MAXIFY G3411'],
@@ -207,3 +142,68 @@ export const PRINTER_SERIES_SUGGESTIONS: Record<string, string[]> = {
   'Sharp': ['MX-M264', 'AR-6020', 'MX-M315NV'],
   'Brother': ['HL-L2350DW', 'MFC-L2710DW', 'DCP-L2540DW']
 };
+
+// Added missing exports to fix component errors
+export enum AspectRatio {
+  SQUARE = 'SQUARE',
+  POSTER = 'POSTER',
+  LANDSCAPE = 'LANDSCAPE',
+  WIDE = 'WIDE'
+}
+
+export enum PrintFormat {
+  POSTER = 'POSTER',
+  TSHIRT = 'TSHIRT',
+  MUG = 'MUG',
+  BUSINESS_CARD = 'BUSINESS_CARD'
+}
+
+export enum ProductType {
+  TSHIRT = 'TSHIRT',
+  HOODIE = 'HOODIE',
+  POSTER = 'POSTER',
+  MUG = 'MUG',
+  NOTEBOOK = 'NOTEBOOK'
+}
+
+export enum ModelType {
+  FLASH = 'FLASH',
+  FLASH_THINKING = 'FLASH_THINKING',
+  PRO = 'PRO'
+}
+
+export interface InvoiceItem {
+  description: string;
+  partNumber?: string;
+  type: 'part' | 'service';
+  cost: number;
+}
+
+export interface InvoiceData {
+  invoiceNumber: string;
+  date: string;
+  clientName: string;
+  printerModel: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+export interface PartLookupData {
+  partName: string;
+  partNumber: string;
+  compatibility: string[];
+  price?: string;
+}
+
+export const COMMON_PARTS = [
+  'وحدة السخان (Fuser Unit)',
+  'الحصيرة (Transfer Belt)',
+  'بكرات السحب (Pickup Rollers)',
+  'وحدة الدرام (Drum Unit)',
+  'عبوة الحبر (Toner Cartridge)',
+  'وحدة الليزر (Laser Scanner)',
+  'لوحة الفورماتر (Formatter Board)',
+  'لوحة الباور (Power Supply Board)'
+];

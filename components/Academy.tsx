@@ -12,7 +12,6 @@ import {
   Flame, Repeat, Droplets, Box, Circle, Navigation
 } from 'lucide-react';
 
-// Safe mapping for dynamic icons to ensure Rollup resolves them correctly
 const ICON_MAP: Record<string, React.ElementType> = {
   GraduationCap, Loader2, CheckCircle, ArrowRight, ListChecks, 
   Lightbulb, ImageIcon, ChevronLeft, Home, Search, Scan, 
@@ -32,14 +31,11 @@ const Academy: React.FC = () => {
   const [lessonContent, setLessonContent] = useState<LessonContent | null>(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(false);
   const [isImageGenerating, setIsImageGenerating] = useState(false);
-  const [imageGenError, setImageGenError] = useState<string | null>(null);
 
-  // Camera & Analysis State
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
-  // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -60,38 +56,29 @@ const Academy: React.FC = () => {
 
   const filteredModels = useMemo(() => {
     const pool: string[] = [];
-    
-    // Safe iteration over suggestions to avoid TS iterator errors
     const suggestions = currentSegmentConfig.suggestions;
-    for (const brand in suggestions) {
-      if (Object.prototype.hasOwnProperty.call(suggestions, brand)) {
-        const list = suggestions[brand];
-        if (Array.isArray(list)) {
-          pool.push(...list);
-        }
-      }
-    }
+    
+    // Type-safe iteration
+    Object.keys(suggestions).forEach(brand => {
+      const list = suggestions[brand];
+      if (Array.isArray(list)) pool.push(...list);
+    });
 
     if (selectedSegment === 'printers') {
-      const series = PRINTER_SERIES_SUGGESTIONS;
-      for (const brand in series) {
-        if (Object.prototype.hasOwnProperty.call(series, brand)) {
-          const list = series[brand];
-          if (Array.isArray(list)) {
-            pool.push(...list);
-          }
-        }
-      }
+      Object.keys(PRINTER_SERIES_SUGGESTIONS).forEach(brand => {
+        const list = PRINTER_SERIES_SUGGESTIONS[brand];
+        if (Array.isArray(list)) pool.push(...list);
+      });
     }
 
     const uniqueModels = Array.from(new Set(pool));
-    const q = debouncedSearch.toLowerCase().trim();
+    const q = (debouncedSearch || '').toLowerCase().trim();
     return uniqueModels.filter(m => {
       const matchQuery = m.toLowerCase().includes(q);
       const matchBrand = selectedBrand ? m.toLowerCase().includes(selectedBrand.toLowerCase()) : true;
       return matchQuery && matchBrand;
     }).slice(0, 50);
-  }, [debouncedSearch, selectedBrand, selectedSegment, currentSegmentConfig.suggestions]);
+  }, [debouncedSearch, selectedBrand, selectedSegment, currentSegmentConfig]);
 
   const loadLesson = async (part: any) => {
     setActivePart(part);
@@ -105,7 +92,7 @@ const Academy: React.FC = () => {
         triggerImageGeneration(part.name, selectedModel);
       }
     } catch (e) {
-      console.error("Error loading lesson:", e);
+      console.error(e);
       setIsLoadingLesson(false);
     }
   };
@@ -113,10 +100,10 @@ const Academy: React.FC = () => {
   const triggerImageGeneration = async (partName: string, modelName: string) => {
     setIsImageGenerating(true);
     try {
-      const img = await generateImage(`${partName} ${modelName} technical component`);
+      const img = await generateImage(`${partName} ${modelName} technical view`);
       setLessonContent(prev => prev ? { ...prev, partImageUrl: img } : null);
     } catch (err) {
-      setImageGenError("Image failed");
+      console.error(err);
     } finally {
       setIsImageGenerating(false);
     }
@@ -150,7 +137,7 @@ const Academy: React.FC = () => {
     stopCamera();
     setIsAnalyzing(true);
     try {
-      const res = await analyzeMultimodal("حلل الصورة", imageData.split(',')[1], 'image/jpeg');
+      const res = await analyzeMultimodal("ما العطل في هذه القطعة؟", imageData.split(',')[1], 'image/jpeg');
       setAnalysisResult(res);
     } catch (err) {
       console.error(err);
@@ -171,9 +158,7 @@ const Academy: React.FC = () => {
           <div className={`size-9 ${currentStyle.bg} rounded-lg flex items-center justify-center text-white`}>
             <GraduationCap size={18} />
           </div>
-          <div>
-            <h1 className="font-black text-slate-800 text-xs leading-none">أكاديمية الصيانة</h1>
-          </div>
+          <h1 className="font-black text-slate-800 text-xs">أكاديمية الصيانة</h1>
         </div>
         {view !== 'selector' && (
           <button onClick={() => setView('selector')} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">

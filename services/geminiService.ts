@@ -1,14 +1,14 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { InvoiceData, PartLookupData, PrinterDetails, LessonContent } from "../types";
+import { PrinterDetails, LessonContent } from "../types";
 
 const getSystemInstruction = (userName?: string) => `
 أنت "AI Print by Loai"، مساعد ذكي متخصص لمهندسي صيانة الطابعات. المطور: م. لؤي عامر.
-الجمهور: مهندسون محترفون. نادِ المستخدم: ${userName ? `"${userName}"` : "يا هندسة"}.
-أجب بلهجة تقنية، دقيقة، ومختصرة.
+أجب بلهجة تقنية دقيقة ومختصرة. نادِ المستخدم: ${userName || "يا هندسة"}.
 `;
 
 const getClient = () => {
+  // Always use process.env.API_KEY as the exclusive source
   return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 };
 
@@ -39,7 +39,7 @@ export const analyzeMultimodal = async (prompt: string, base64Data: string, mime
 export const fetchLessonDetails = async (lessonTitle: string, model?: string): Promise<LessonContent | null> => {
   try {
     const ai = getClient();
-    const prompt = `Provide detailed technical lesson for: "${lessonTitle}" ${model ? `for ${model}` : ''}. Return JSON only with fields: videoId, summary, timestamps (array of {time, label}), tools (array), steps (array), goldenTip, partDescription.`;
+    const prompt = `Technical details for: "${lessonTitle}" ${model ? `for ${model}` : ''}. Return JSON only: videoId, summary, timestamps, tools, steps, goldenTip, partDescription.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -52,7 +52,7 @@ export const fetchLessonDetails = async (lessonTitle: string, model?: string): P
 
     return JSON.parse(response.text || "{}") as LessonContent;
   } catch (error) {
-    console.error("Lesson Error:", error);
+    console.error(error);
     return null;
   }
 };
@@ -62,21 +62,18 @@ export const generateImage = async (prompt: string): Promise<string> => {
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
-      parts: [{ text: `PHOTOGRAPH, SHARP MACRO, technical view of printer spare part: ${prompt}. Professional studio lighting.` }]
+      parts: [{ text: `PHOTOGRAPH, SHARP MACRO, technical view of printer part: ${prompt}. Professional lighting.` }]
     },
     config: {
-      imageConfig: {
-        aspectRatio: "1:1"
-      }
+      imageConfig: { aspectRatio: "1:1" }
     }
   });
   
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
-    }
+  const part = response.candidates[0].content.parts.find(p => p.inlineData);
+  if (part?.inlineData) {
+    return `data:image/png;base64,${part.inlineData.data}`;
   }
-  throw new Error("Image generation failed");
+  throw new Error("Failed to generate image");
 };
 
 export const streamChatResponse = async (
@@ -101,7 +98,7 @@ export const streamChatResponse = async (
 
 export const getComprehensivePrinterDetails = async (brand: string, model: string): Promise<PrinterDetails | null> => {
   const ai = getClient();
-  const prompt = `Technical specs for ${brand} ${model}. JSON format.`;
+  const prompt = `Specs for ${brand} ${model}. JSON format.`;
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -127,55 +124,45 @@ export const getComprehensivePrinterDetails = async (brand: string, model: strin
 
 export const searchForDrivers = async (model: string, os: string) => {
   const ai = getClient();
-  const prompt = `Find official download links for drivers of printer model "${model}" for operating system "${os}". List the links clearly in Arabic.`;
+  const prompt = `Official drivers for "${model}" on "${os}". Arabic summary with links.`;
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-    },
+    config: { tools: [{ googleSearch: {} }] },
   });
 
   const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
     ?.filter(chunk => chunk.web)
-    .map(chunk => ({ title: chunk.web.title || "رابط التحميل", uri: chunk.web.uri || "" })) || [];
+    .map(chunk => ({ title: chunk.web.title || "رابط", uri: chunk.web.uri || "" })) || [];
 
-  return {
-    text: response.text || "",
-    sources: sources
-  };
+  return { text: response.text || "", sources };
 };
 
 export const findFirmware = async (brand: string, model: string): Promise<string> => {
   const ai = getClient();
-  const prompt = `Search for latest official firmware versions for "${brand} ${model}". Format as a technical markdown table in Arabic.`;
+  const prompt = `Latest firmware versions for "${brand} ${model}". Markdown table in Arabic.`;
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-    },
+    config: { tools: [{ googleSearch: {} }] },
   });
   return response.text || "";
 };
 
 export const fetchLatestPrinterData = async (brand: string): Promise<string[]> => {
   const ai = getClient();
-  const prompt = `List 10 recent printer model names from ${brand} (including 2024-2025 releases). Return as a JSON array of strings only.`;
+  const prompt = `10 recent printer models from ${brand}. JSON string array.`;
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: { type: Type.STRING }
-      }
+      responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
     }
   });
   try {
     return JSON.parse(response.text || "[]");
-  } catch (e) {
+  } catch {
     return [];
   }
 };
