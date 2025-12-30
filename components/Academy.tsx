@@ -59,22 +59,32 @@ const Academy: React.FC = () => {
   }, [searchQuery]);
 
   const filteredModels = useMemo(() => {
-    const globalPool: string[] = [];
+    const pool: string[] = [];
     
-    // Casting Object.values to string[][] to fix TypeScript unknown iterator error
-    const suggestionsPool = Object.values(currentSegmentConfig.suggestions) as string[][];
-    suggestionsPool.forEach(list => {
-      globalPool.push(...list);
-    });
-
-    if (selectedSegment === 'printers') {
-      const seriesSuggestions = Object.values(PRINTER_SERIES_SUGGESTIONS) as string[][];
-      seriesSuggestions.forEach(list => {
-        globalPool.push(...list);
-      });
+    // Safe iteration over suggestions to avoid TS iterator errors
+    const suggestions = currentSegmentConfig.suggestions;
+    for (const brand in suggestions) {
+      if (Object.prototype.hasOwnProperty.call(suggestions, brand)) {
+        const list = suggestions[brand];
+        if (Array.isArray(list)) {
+          pool.push(...list);
+        }
+      }
     }
 
-    const uniqueModels = Array.from(new Set(globalPool));
+    if (selectedSegment === 'printers') {
+      const series = PRINTER_SERIES_SUGGESTIONS;
+      for (const brand in series) {
+        if (Object.prototype.hasOwnProperty.call(series, brand)) {
+          const list = series[brand];
+          if (Array.isArray(list)) {
+            pool.push(...list);
+          }
+        }
+      }
+    }
+
+    const uniqueModels = Array.from(new Set(pool));
     const q = debouncedSearch.toLowerCase().trim();
     return uniqueModels.filter(m => {
       const matchQuery = m.toLowerCase().includes(q);
