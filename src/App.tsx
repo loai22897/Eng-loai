@@ -16,7 +16,6 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // التحقق من وجود Telegram WebApp وتجهيزه
     if ((window as any).Telegram?.WebApp) {
       (window as any).Telegram.WebApp.ready();
       (window as any).Telegram.WebApp.expand();
@@ -47,7 +46,6 @@ const App: React.FC = () => {
       />
       
       <main className="flex-1 flex flex-col h-full relative w-full overflow-hidden bg-white md:rounded-r-[2.5rem] shadow-inner">
-        {/* هيدر الموبايل */}
         <div className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 flex items-center justify-between z-40 sticky top-0">
           <h1 className="text-lg font-black text-blue-600 tracking-tighter">AI PRINT</h1>
           <button 

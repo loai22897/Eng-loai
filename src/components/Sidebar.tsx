@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
              </div>
           </div>
           <div className="mt-6 flex flex-col items-start">
-             <span className="text-xs text-slate-500 font-serif italic">ℓσαι 𝒜𝓂𝓮𝓻 🛠️</span>
+             <span className="text-xs text-slate-500 font-serif italic" style={{fontFamily: 'serif'}}>ℓσαι 𝒜𝓂𝓮𝓻 🛠️</span>
           </div>
         </div>
 

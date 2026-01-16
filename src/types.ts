@@ -143,7 +143,6 @@ export const PRINTER_SERIES_SUGGESTIONS: Record<string, string[]> = {
   'Brother': ['HL-L2350DW', 'MFC-L2710DW', 'DCP-L2540DW']
 };
 
-// Added missing exports to fix component errors
 export enum AspectRatio {
   SQUARE = 'SQUARE',
   POSTER = 'POSTER',
