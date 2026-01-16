@@ -56,18 +56,22 @@ const Academy: React.FC = () => {
 
   const filteredModels = useMemo(() => {
     const pool: string[] = [];
-    const suggestions = currentSegmentConfig.suggestions;
     
-    // Type-safe iteration
+    // Fix: Using Object.keys for safe iteration in TS
+    const suggestions = currentSegmentConfig.suggestions;
     Object.keys(suggestions).forEach(brand => {
       const list = suggestions[brand];
-      if (Array.isArray(list)) pool.push(...list);
+      if (Array.isArray(list)) {
+        pool.push(...list);
+      }
     });
 
     if (selectedSegment === 'printers') {
       Object.keys(PRINTER_SERIES_SUGGESTIONS).forEach(brand => {
         const list = PRINTER_SERIES_SUGGESTIONS[brand];
-        if (Array.isArray(list)) pool.push(...list);
+        if (Array.isArray(list)) {
+          pool.push(...list);
+        }
       });
     }
 
@@ -137,7 +141,7 @@ const Academy: React.FC = () => {
     stopCamera();
     setIsAnalyzing(true);
     try {
-      const res = await analyzeMultimodal("ما العطل في هذه القطعة؟", imageData.split(',')[1], 'image/jpeg');
+      const res = await analyzeMultimodal("حلل العطل الفني الظاهر", imageData.split(',')[1], 'image/jpeg');
       setAnalysisResult(res);
     } catch (err) {
       console.error(err);
@@ -255,6 +259,12 @@ const Academy: React.FC = () => {
                 </div>
               ))}
             </div>
+            {analysisResult && (
+              <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-right">
+                <h4 className="font-black text-amber-900 text-xs mb-2">تحليل الكاميرا:</h4>
+                <p className="text-[11px] text-amber-800 leading-relaxed">{analysisResult}</p>
+              </div>
+            )}
             <button onClick={() => setView('parts')} className={`w-full py-4 ${currentStyle.bg} text-white rounded-xl font-black shadow-lg`}>تم الإنجاز</button>
           </div>
         )}
